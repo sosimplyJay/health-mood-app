@@ -1,9 +1,9 @@
 const { Pool } = require('pg');
 require("dotenv").config();
-console.log("DATABASE_URL2:",process.env.DATABASE_URL2)
+console.log("DATABASE_URL:",process.env.DATABASE_URL)
 // Setup the PostgreSQL pool
 const pool = new Pool({
-    connectionString: process.env.DATABASE_URL2,
+    connectionString: process.env.DATABASE_URL,
     ssl: false 
     //ssl:{
         //rejectUnauthorized: false
