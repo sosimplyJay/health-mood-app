@@ -71,7 +71,7 @@ node migration.js
 node server.js
 ```
 
-Deploying to Heroku
+## Deploying to Heroku
 Make sure to add the postgres addon:
 ```
 heroku addons:create heroku-postgresql:essential-0
