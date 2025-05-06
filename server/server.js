@@ -3,9 +3,13 @@ const express = require('express');
 const path = require('path');
 const { createClient } = require('@supabase/supabase-js');
 require('dotenv').config();
+const axios = require('axios');
 
 // Initialize Supabase client
 const supabase = createClient(process.env.SUPABASE_URL, process.env.SUPABASE_SERVICE_ROLE_KEY);
+
+// Mistral API Key (set in your .env file)
+const MISTRAL_API_KEY = process.env.MISTRAL_API_KEY;
 
 const app = express();
 app.use(express.json());
@@ -84,6 +88,67 @@ app.post('/verify', async (req, res) => {
         res.status(500).json({ success: false, message: 'Error verifying email' });
     }
 });
+
+
+// Endpoint to analyze meal and store results
+app.post('/analyze-meal', async (req, res) => {
+    const { user_email, meal_description } = req.body;
+
+    if (!user_email || !meal_description) {
+        return res.status(400).json({ error: "Missing user_email or meal_description" });
+    }
+
+    try {
+        // Call Mistral API for meal analysis
+        const response = await axios.post("https://api.mistral.ai/v1/chat/completions", {
+            model: "mistral-medium",
+            messages: [
+                { role: "system", content: "You are a nutritionist AI." },
+                { role: "user", content: `Estimate the calories, sugar (grams), protein, carbs, and fats for this meal: ${meal_description}. Return values in a comma-separated format: Calories, Sugar(g), Protein(g), Carbs(g), Fats(g).` }
+            ]
+        }, {
+            headers: { Authorization: `Bearer ${MISTRAL_API_KEY}` }
+        });
+
+        const analysis = response.data.choices[0].message.content;
+        const [calories, sugar_grams, protein, carbs, fats] = analysis.split(',').map(Number);
+
+        // Store in Supabase
+        const { data, error } = await supabase.from('meal_logs').insert([
+            { user_email, meal_description, calories, sugar_grams, protein, carbs, fats }
+        ]);
+
+        if (error) throw error;
+
+        res.json({ success: true, data });
+    } catch (error) {
+        console.error("Meal analysis error:", error);
+        res.status(500).json({ error: "Failed to analyze meal" });
+    }
+});
+
+app.get('/meal-logs', async (req, res) => {
+    const { email } = req.query;
+    if (!email) return res.status(400).json({ error: "Missing email parameter" });
+
+    try {
+        const { data, error } = await supabase
+            .from('meal_logs')
+            .select('*')
+            .eq('user_email', email)
+            .order('created_at', { ascending: true });
+
+        if (error) throw error;
+
+        res.json(data);
+    } catch (error) {
+        console.error("Error fetching meal logs:", error);
+        res.status(500).json({ error: "Failed to fetch meal logs" });
+    }
+});
+
+
+
 
 // Fallback route to serve React frontend for any unmatched routes
 app.get('*', (req, res) => {
