@@ -150,7 +150,7 @@ function Dashboard({ name, email, onLogout }) {
         <p className="sand-timer-complete">✅ Time to eat!</p>
       )}
 
-      <div className="dashboard-nav">$1
+      <div className="dashboard-nav">
         <button className={currentPage === 'timing' ? 'active' : ''} onClick={() => setCurrentPage('timing')}>⏱️ Meal Timing Options</button>
 
       {currentPage === 'log' && (
