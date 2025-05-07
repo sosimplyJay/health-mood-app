@@ -128,7 +128,7 @@ function Dashboard({ name, email, onLogout }) {
       setMoodMessage('Carb cravings met 🍟');
     } else {
       setMoodBackground('default');
-      setMoodMessage('You're doing amazing 💫');
+      setMoodMessage('You\'re doing amazing 💫');
     }
   };
 
